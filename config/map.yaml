@@ -1,0 +1,27 @@
+gridmap:
+  frequency: 1        # which frequency do we want to send an updated map?
+  map_id: "map"      # map name
+  size_x: 8           # size of x in meters
+  size_y: 8           # size of y in meters
+  resolution: 0.05    # size of each grid
+  map_origin_x: 0     # center x position of the map
+  map_origin_y: 0     # center y position of the map
+  publish_topic: "/testpub" # The topic name of the map publisher 
+
+
+
+obstacle_circle:
+  create_static:
+    use: false
+    x: [0]
+    y: [-0.25]
+    radius: [0.5]
+  receiving_position:
+    use: false
+    topic: ["/gridmap_obstacle"]
+    radius: [0.01]
+  receiving_position_gazebo:
+    use: true
+    topic: "/gazebo/model_states"
+    radius: 0.5
+

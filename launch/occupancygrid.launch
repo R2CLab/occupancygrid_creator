@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+
+<launch>
+  <!-- ROS parameter settings -->
+  <rosparam command="load" file="$(find occupancygrid_creator)/config/map.yaml"/>
+
+  <!-- Start LMPCC node -->
+  <node pkg="occupancygrid_creator" type="occupancygrid_creator_node" name="occupancygrid_creator_node" cwd="node" respawn="false" output="screen"/>
+
+
+</launch>
