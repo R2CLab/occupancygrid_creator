@@ -55,7 +55,7 @@ bool OccupancygridCreator::loadConfig()
     if (!nh_.param("/obstacle_circle/receiving_position/topic", receiving_obstacle_position_topics, {})){defaultFunc("/receiving_position/topic");};
     if (!nh_.param("/obstacle_circle/receiving_position/radius", receiving_obstacle_radius_, {})){defaultFunc("/receiving_position/radius");};
 
-    if (!nh_.param("/obstacle_circle/receiving_position_gazebo/use", receiving_obstacle_position_use_, false)){defaultFunc("/receiving_position_gazebo/use");};
+    if (!nh_.param("/obstacle_circle/receiving_position_gazebo/use", receiving_obstacle_position_gazebo_use_, false)){defaultFunc("/receiving_position_gazebo/use");};
     if (!nh_.param("/obstacle_circle/receiving_position_gazebo/topic", receiving_obstacle_position_gazebo_topic, std::string("temp"))){defaultFunc("/receiving_position_gazebo/topic");};
     if (!nh_.param("/obstacle_circle/receiving_position_gazebo/radius", receiving_obstacle_gazebo_radius_, 1.0)){defaultFunc("/receiving_position_gazebo/radius");};
 
@@ -114,10 +114,9 @@ bool OccupancygridCreator::loadConfig()
     {
         for (long unsigned int i = 0; i<receiving_obstacle_position_topics.size(); i++)
         {
-            subs_vector_[i] = nh_.subscribe<nav_msgs::Odometry>(receiving_obstacle_position_topics[i], 1, std::bind(&OccupancygridCreator::callbackPositionObstacle, this, std::placeholders::_1, i));
+            subs_vector_[i] = nh_.subscribe<geometry_msgs::PoseStamped>(receiving_obstacle_position_topics[i], 1, std::bind(&OccupancygridCreator::callbackPositionObstacle, this, std::placeholders::_1, i));
         }
-        //subs_vector_test_ = nh_.subscribe<nav_msgs::Odometry>(receiving_obstacle_position_topics[0], 1, &OccupancygridCreator::callbackPositionObstacle2, this);
-
+        //subs_vector_test_ = nh_.subscribe<geometry_msgs::PoseStamped>(receiving_obstacle_position_topics[0], 1, &OccupancygridCreator::callbackPositionObstacle2, this);
     }
 
     if (receiving_obstacle_position_gazebo_use_)
@@ -153,8 +152,9 @@ void OccupancygridCreator::createMap(const ros::TimerEvent& event)
         for (long unsigned int i=0; i<state_msgs_stored_.size(); i++)
         {
             if (!state_received_[i]){continue;};
-            double x = state_msgs_stored_[i].pose.pose.position.x;
-            double y = state_msgs_stored_[i].pose.pose.position.y;
+            ROS_WARN_STREAM("found :" << state_msgs_stored_[i].pose.position.x);
+            double x = state_msgs_stored_[i].pose.position.x;
+            double y = state_msgs_stored_[i].pose.position.y;
             placeObstacleInGrid(new_gridmap, x, y, receiving_obstacle_radius_[i]);
         }
         pub_map_.publish(new_gridmap);
@@ -211,9 +211,16 @@ void OccupancygridCreator::placeObstacleInGrid(nav_msgs::OccupancyGrid &gridmap,
     }
 }
 
-void OccupancygridCreator::callbackPositionObstacle(const nav_msgs::Odometry::ConstPtr &msg, const long unsigned int i)
+void OccupancygridCreator::callbackPositionObstacle(const geometry_msgs::PoseStamped::ConstPtr &msg, const long unsigned int i)
 {
     state_msgs_stored_[i] = *msg;
+    state_received_[i] = true;
+}
+
+void OccupancygridCreator::callbackPositionObstacle2(const geometry_msgs::PoseStamped msg)
+{
+    int i = 0;
+    state_msgs_stored_2_ = msg;
     state_received_[i] = true;
 }
 

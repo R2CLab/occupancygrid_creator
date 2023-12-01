@@ -6,6 +6,7 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/Odometry.h>
 #include <gazebo_msgs/ModelStates.h>
+#include <geometry_msgs/PoseStamped.h>
 
 
 class OccupancygridCreator
@@ -16,7 +17,8 @@ public:
 
     // ros messages
     nav_msgs::OccupancyGrid gridmap_;
-    std::vector<nav_msgs::Odometry> state_msgs_stored_;
+    std::vector<geometry_msgs::PoseStamped> state_msgs_stored_;
+    geometry_msgs::PoseStamped state_msgs_stored_2_;
 
     // ros publisher
     ros::Publisher pub_map_;
@@ -52,7 +54,9 @@ public:
 
     void placeObstacleInGrid(nav_msgs::OccupancyGrid &gridmap, double x_cur, double y_cur, double radius_cur);
 
-    void callbackPositionObstacle(const nav_msgs::Odometry::ConstPtr &msg, const long unsigned int i);
+    void callbackPositionObstacle(const geometry_msgs::PoseStamped::ConstPtr &msg, const long unsigned int i);
+    
+    void callbackPositionObstacle2(const geometry_msgs::PoseStamped msg);
 
     void callbackPositionObstacleGazebo(const gazebo_msgs::ModelStates &msg);
 };

@@ -21,6 +21,7 @@ catkin_package(
   CATKIN_DEPENDS roscpp
                  sensor_msgs
                  nav_msgs
+                 geometry_msgs
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
 )
