@@ -54,6 +54,8 @@ public:
 
     void placeObstacleInGrid(nav_msgs::OccupancyGrid &gridmap, double x_cur, double y_cur, double radius_cur);
 
+    void placeSquareInGrid(nav_msgs::OccupancyGrid &gridmap, double x_cur, double y_cur, double length, double width, double orientation);
+
     void callbackPositionObstacle(const geometry_msgs::PoseStamped::ConstPtr &msg, const long unsigned int i);
     
     void callbackPositionObstacle2(const geometry_msgs::PoseStamped msg);

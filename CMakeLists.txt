@@ -14,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
 )
 
+find_package(OpenCV REQUIRED)
+
 find_package(Eigen3 REQUIRED)
 
 # Define the current package
@@ -31,6 +33,7 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
+  ${OPENCV_INCLUDE_DIRS}
   ${PROJECT_NAME}_gencfg
 )
 
