@@ -1,0 +1,26 @@
+gridmap:
+  frequency: 1        # which frequency do we want to send an updated map?
+  map_id: "map"      # map name
+  size_x: 8           # size of x in meters
+  size_y: 8           # size of y in meters
+  resolution: 0.01    # size of each grid
+  map_origin_x: 0     # center x position of the map
+  map_origin_y: 0     # center y position of the map
+  publish_topic: "/costmap_node/costmap/costmap" # The topic name of the map publisher 
+
+
+
+obstacle_circle:
+  create_static:
+    use: true
+    x: [0, 2]
+    y: [-0.25, -0.75]
+    radius: [0.5, 0.5]
+  receiving_position:
+    use: false
+    topic: ["/gridmap_obstacle_1/pose", "/gridmap_obstacle_2/pose", "/gridmap_obstacle_3/pose"]
+    radius: [0.36, 0.36, 0.36]
+  receiving_position_gazebo:
+    use: false
+    topic: "/gazebo/model_states"
+    radius: 0.5
