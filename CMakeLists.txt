@@ -49,7 +49,7 @@ set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
 # Add the sources and headers to the library
 add_library(${PROJECT_NAME} ${LIBRARY_SOURCES} ${LIBRARY_HEADERS} )
 # Link the library to other libraries needed
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} )
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 # Specify include directories to use when compiling given target
 target_include_directories(${PROJECT_NAME} PUBLIC)
 

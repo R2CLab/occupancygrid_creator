@@ -6,8 +6,10 @@
 #include <cmath>
 #include <boost/bind/bind.hpp>
 #include <boost/bind/placeholders.hpp>
-//#include <opencv2/core/core.hpp>
-
+#include <opencv2/core/core.hpp>
+#include <opencv2/core/types.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 OccupancygridCreator::OccupancygridCreator(ros::NodeHandle &node_handle)
     :nh_(node_handle)
@@ -90,7 +92,7 @@ bool OccupancygridCreator::loadConfig()
         }
 
         createStaticObstacles(static_obstacle_x, static_obstacle_y, static_obstacle_radius);
-        //placeSquareInGrid(gridmap_, 0, 0, 1, 1, 0);
+        placeSquareInGrid(gridmap_, 0, 0, 1, 1, 0);
 
     }
 
@@ -216,41 +218,26 @@ void OccupancygridCreator::placeObstacleInGrid(nav_msgs::OccupancyGrid &gridmap,
 void OccupancygridCreator::placeSquareInGrid(nav_msgs::OccupancyGrid &gridmap, double x_cur, double y_cur, double length, double width, double orientation)
 {
 
-    int n_length_pixels = 1.3*length/gridmap.info.resolution;
-    int n_width_pixels = 1.3*width/gridmap.info.resolution;
+    //here we create the image
+    cv::Mat test_image(gridmap.info.width, gridmap.info.height, CV_8UC1, gridmap.data.data());
+    // first is middle point, then length and width in meters, then orientation in degrees
+    cv::RotatedRect rRect = cv::RotatedRect(cv::Point2f(100,400), cv::Size2f(100,75), 30);
+    cv::Point2f vertices[4];
+    rRect.points(vertices);
+    for (int i = 0; i < 4; i++)
+        cv::line(test_image, vertices[i], vertices[(i+1)%4], cv::Scalar(100), 2);
+    cv::Rect brect = rRect.boundingRect();
 
-    // Go through vertical lines
-    for (double i = 0; i < n_length_pixels; i++)
-    {
-        double x_on_vertical = width/gridmap.info.resolution;
-        double y_on_vertical = i-0.5*length/gridmap.info.resolution;
+    // Draw normal rectangle
+    //cv::rectangle(test_image, brect, cv::Scalar(100), 2);
 
-        int x_on_grid = x_on_vertical+(x_cur-gridmap.info.origin.position.x)/gridmap.info.resolution;
-        int y_on_grid = y_on_vertical+(y_cur-gridmap.info.origin.position.y)/gridmap.info.resolution;
+    // Show in a window
+    //cv::imshow("rectangles", test_image);
+    //cv::waitKey(0);
 
-        gridmap.data[x_on_grid+y_on_grid*gridmap.info.height] = 100;
+    // The way to create gridmap again (should be once each time)
+    gridmap.data = std::vector<int8_t>(test_image.data, test_image.data + test_image.total());
 
-        x_on_grid = -1*x_on_vertical+(x_cur-gridmap.info.origin.position.x)/gridmap.info.resolution;
-        gridmap.data[x_on_grid+y_on_grid*gridmap.info.height] = 100;
-    }
-
-    // Go through horizontal lines
-    for (double i = 0; i < n_width_pixels; i++)
-    {
-        double x_on_vertical = i-0.5*width/gridmap.info.resolution;
-        double y_on_vertical = length/gridmap.info.resolution;
-
-        int x_on_grid = x_on_vertical+(x_cur-gridmap.info.origin.position.x)/gridmap.info.resolution;
-        int y_on_grid = y_on_vertical+(y_cur-gridmap.info.origin.position.y)/gridmap.info.resolution;
-
-        gridmap.data[x_on_grid+y_on_grid*gridmap.info.height] = 100;
-
-        y_on_grid = -1*y_on_vertical+(y_cur-gridmap.info.origin.position.y)/gridmap.info.resolution;
-        gridmap.data[x_on_grid+y_on_grid*gridmap.info.height] = 100;
-    }
-
-
-    //cv::Mat restored = cv::Mat(gridmap.info.width, gridmap.info.height, image.type(), gridmap.data);
 }
 
 void OccupancygridCreator::callbackPositionObstacle(const geometry_msgs::PoseStamped::ConstPtr &msg, const long unsigned int i)
