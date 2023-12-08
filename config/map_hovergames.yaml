@@ -10,16 +10,31 @@ gridmap:
 
 
 
-obstacle_circle:
+obstacles:
   create_static:
     use: true
-    x: [0, 2]
-    y: [-0.25, -0.75]
-    radius: [0.5, 0.5]
+    circles:
+      x_center: [0, 2]
+      y_center: [-0.25, -0.75]
+      radius: [0.5, 0.5]
+    squares:
+      x_center: [0]
+      y_center: [0]
+      length: [1]
+      width: [2]
+      orientation_deg: [45]
+      line_thickness: [0.05]
   receiving_position:
     use: false
-    topic: ["/gridmap_obstacle_1/pose", "/gridmap_obstacle_2/pose", "/gridmap_obstacle_3/pose"]
-    radius: [0.36, 0.36, 0.36]
+    circles:
+      topics: []
+      radius: []
+    rectangles:
+      topics: [/obstacle/square1]
+      lengths: [1.2]
+      widths: [0.6]
+      line_thickness: [0.05]
+
   receiving_position_gazebo:
     use: false
     topic: "/gazebo/model_states"

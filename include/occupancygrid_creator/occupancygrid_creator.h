@@ -7,7 +7,7 @@
 #include <nav_msgs/Odometry.h>
 #include <gazebo_msgs/ModelStates.h>
 #include <geometry_msgs/PoseStamped.h>
-
+#include <opencv2/core/core.hpp>
 
 class OccupancygridCreator
 {
@@ -54,7 +54,9 @@ public:
 
     void placeObstacleInGrid(nav_msgs::OccupancyGrid &gridmap, double x_cur, double y_cur, double radius_cur);
 
-    void placeSquareInGrid(nav_msgs::OccupancyGrid &gridmap, double x_cur, double y_cur, double length, double width, double orientation);
+    void placeSquareInImage(nav_msgs::OccupancyGrid &gridmap, cv::Mat &occupancy_image, double x_cur, double y_cur, double length, double width, double orientation, double line_thickness);
+
+    void placeLineInImage(nav_msgs::OccupancyGrid &gridmap, cv::Mat &occupancy_image, double x_cur, double y_cur, double length, double orientation, double line_thickness);
 
     void callbackPositionObstacle(const geometry_msgs::PoseStamped::ConstPtr &msg, const long unsigned int i);
     
