@@ -1,8 +1,8 @@
 gridmap:
   frequency: 1        # which frequency do we want to send an updated map?
   map_id: "map"      # map name
-  size_x: 8           # size of x in meters
-  size_y: 8           # size of y in meters
+  size_x: 12           # size of x in meters
+  size_y: 12           # size of y in meters
   resolution: 0.01    # size of each grid
   map_origin_x: 0     # center x position of the map
   map_origin_y: 0     # center y position of the map
@@ -14,25 +14,29 @@ obstacles:
   create_static:
     use: true
     circles:
-      x_center: [0, 2]
-      y_center: [-0.25, -0.75]
-      radius: [0.5, 0.5]
+      x_center: []
+      y_center: []
+      radius: []
     squares:
       x_center: [0]
       y_center: [0]
-      length: [1]
-      width: [2]
-      orientation_deg: [45]
-      line_thickness: [0.05]
+      length: [9]
+      width: [7]
+      orientation_deg: [0]
+      line_thickness: [0.10]
   receiving_position:
-    use: false
+    use: true
     circles:
       topics: []
       radius: []
     rectangles:
-      topics: [/obstacle/square1]
-      lengths: [1.2]
-      widths: [0.6]
+      topics: [/obstacles/rectangle2x1_1, /obstacles/rectangle2x1_2]
+      lengths: [0.6, 0.6]
+      widths: [1.2, 1.2]
+      line_thickness: [0.05, 0.05]
+    lines:
+      topics: [/obstacles/line1]
+      lengths: [4]
       line_thickness: [0.05]
 
   receiving_position_gazebo:

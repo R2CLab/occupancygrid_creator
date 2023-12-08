@@ -10,6 +10,9 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 OccupancygridCreator::OccupancygridCreator(ros::NodeHandle &node_handle)
     :nh_(node_handle)
 {
@@ -43,7 +46,12 @@ bool OccupancygridCreator::loadConfig()
 
 
 
-    std::vector<std::string> receiving_obstacle_position_topics;
+    std::vector<std::string> receiving_obstacle_position_circles_topics;
+    std::vector<double> receiving_obstacle_circles_radius_;
+
+    std::vector<std::string> receiving_obstacle_position_squares_topics;
+    std::vector<std::string> receiving_obstacle_position_lines_topics;
+
 
     std::string receiving_obstacle_position_gazebo_topic;
 
@@ -71,14 +79,22 @@ bool OccupancygridCreator::loadConfig()
     if (!nh_.param("/obstacles/create_static/squares/line_thickness", static_squares_line_thickness, {})){defaultFunc("/obstacle_create_static/square/line_thickness");};
 
     if (!nh_.param("/obstacles/receiving_position/use", receiving_obstacle_position_use_, false)){defaultFunc("/receiving_position/use");};
-    if (!nh_.param("/obstacles/receiving_position/topic", receiving_obstacle_position_topics, {})){defaultFunc("/receiving_position/topic");};
-    if (!nh_.param("/obstacles/receiving_position/radius", receiving_obstacle_radius_, {})){defaultFunc("/receiving_position/radius");};
+
+    if (!nh_.param("/obstacles/receiving_position/circles/topics", receiving_obstacle_position_circles_topics, {})){defaultFunc("/receiving_position/circles/topic");};
+    if (!nh_.param("/obstacles/receiving_position/circles/radius", receiving_obstacle_circles_radius_, {})){defaultFunc("/receiving_position/circles/radius");};
+
+    if (!nh_.param("/obstacles/receiving_position/rectangles/topics", receiving_obstacle_position_squares_topics, {})){defaultFunc("/receiving_position/squares/topic");};
+    if (!nh_.param("/obstacles/receiving_position/rectangles/lengths", receiving_obstacle_squares_length_, {})){defaultFunc("/receiving_position/squares/length");};
+    if (!nh_.param("/obstacles/receiving_position/rectangles/widths", receiving_obstacle_squares_width_, {})){defaultFunc("/receiving_position/squares/width");};
+    if (!nh_.param("/obstacles/receiving_position/rectangles/line_thickness", receiving_obstacle_squares_line_thickness_, {})){defaultFunc("/receiving_position/squares/line_thickness");};
+
+    if (!nh_.param("/obstacles/receiving_position/lines/topics", receiving_obstacle_position_lines_topics, {})){defaultFunc("/receiving_position/lines/topic");};
+    if (!nh_.param("/obstacles/receiving_position/lines/lengths", receiving_obstacle_lines_length_, {})){defaultFunc("/receiving_position/lines/length");};
+    if (!nh_.param("/obstacles/receiving_position/lines/line_thickness", receiving_obstacle_lines_line_thickness_, {})){defaultFunc("/receiving_position/lines/line_thickness");};
 
     if (!nh_.param("/obstacles/receiving_position_gazebo/use", receiving_obstacle_position_gazebo_use_, false)){defaultFunc("/receiving_position_gazebo/use");};
     if (!nh_.param("/obstacles/receiving_position_gazebo/topic", receiving_obstacle_position_gazebo_topic, std::string("temp"))){defaultFunc("/receiving_position_gazebo/topic");};
     if (!nh_.param("/obstacles/receiving_position_gazebo/radius", receiving_obstacle_gazebo_radius_, 1.0)){defaultFunc("/receiving_position_gazebo/radius");};
-
-
 
     gridmap_.header.stamp = ros::Time::now();
     gridmap_.header.frame_id = map_id;
@@ -96,7 +112,7 @@ bool OccupancygridCreator::loadConfig()
     gridmap_.info.origin.position.y = map_center_y - map_size_y / 2;
 
     //here we create the image
-    cv::Mat occupancy_image(gridmap_.info.width, gridmap_.info.height, CV_8UC1, gridmap_.data.data());
+    occupancy_image_ = cv::Mat(gridmap_.info.width, gridmap_.info.height, CV_8UC1, gridmap_.data.data());
 
     /**
      * SETUP: Static obstacles
@@ -123,29 +139,30 @@ bool OccupancygridCreator::loadConfig()
 
         for (long unsigned int i=0; i<static_squares_x.size(); i++)
         {
-            placeSquareInImage(gridmap_, occupancy_image, static_squares_x[i], static_squares_y[i], static_squares_length[i], static_squares_width[i], static_squares_orientation[i], static_squares_line_thickness[i]);
+            placeSquareInImage(gridmap_, occupancy_image_, static_squares_x[i], static_squares_y[i], static_squares_length[i], static_squares_width[i], static_squares_orientation[i], static_squares_line_thickness[i]);
         }
 
-        placeLineInImage(gridmap_, occupancy_image, 1 , 1, 2, 45, 0.05);
     }
 
 
 
     // Place data back in the gridmap
-    gridmap_.data = std::vector<int8_t>(occupancy_image.data, occupancy_image.data + occupancy_image.total());
+    gridmap_.data = std::vector<int8_t>(occupancy_image_.data, occupancy_image_.data + occupancy_image_.total());
 
 
     /**
      * SETUP: Receiving obstacles
     */
-    if (!(receiving_obstacle_position_topics.size() == receiving_obstacle_radius_.size()))
-    {
-        ROS_ERROR_STREAM("[Occupancygrid Creator]: Parameters receiving_position/topic and receiving_position/radius dont have the same length!");
-        return false;
-    }
+    // if (!(receiving_obstacle_position_topics.size() == receiving_obstacle_radius_.size()))
+    // {
+    //     ROS_ERROR_STREAM("[Occupancygrid Creator]: Parameters receiving_position/topic and receiving_position/radius dont have the same length!");
+    //     return false;
+    // }
 
-    state_msgs_stored_.resize(receiving_obstacle_position_topics.size());
-    state_received_.resize(receiving_obstacle_position_topics.size());
+    state_msgs_stored_.resize(receiving_obstacle_position_squares_topics.size());
+    state_received_.resize(receiving_obstacle_position_squares_topics.size());
+    state_msgs_lines_stored_.resize(receiving_obstacle_position_lines_topics.size());
+    state_received_lines_.resize(receiving_obstacle_position_lines_topics.size());
 
     
     /**
@@ -153,12 +170,20 @@ bool OccupancygridCreator::loadConfig()
     */
     pub_map_ = nh_.advertise<nav_msgs::OccupancyGrid>(publish_topic, 1);
 
-    subs_vector_.resize(receiving_obstacle_position_topics.size());
+
+    subs_vector_.resize(receiving_obstacle_position_squares_topics.size());
+    subs_vector_lines_.resize(receiving_obstacle_position_lines_topics.size());
+
     if (receiving_obstacle_position_use_)
     {
-        for (long unsigned int i = 0; i<receiving_obstacle_position_topics.size(); i++)
+        for (long unsigned int i = 0; i<receiving_obstacle_position_squares_topics.size(); i++)
         {
-            subs_vector_[i] = nh_.subscribe<geometry_msgs::PoseStamped>(receiving_obstacle_position_topics[i], 1, std::bind(&OccupancygridCreator::callbackPositionObstacle, this, std::placeholders::_1, i));
+            subs_vector_[i] = nh_.subscribe<geometry_msgs::TransformStamped>(receiving_obstacle_position_squares_topics[i], 1, std::bind(&OccupancygridCreator::callbackPositionObstacleSquares, this, std::placeholders::_1, i));
+        }
+
+        for (long unsigned int i = 0; i<receiving_obstacle_position_lines_topics.size(); i++)
+        {
+            subs_vector_lines_[i] = nh_.subscribe<geometry_msgs::TransformStamped>(receiving_obstacle_position_lines_topics[i], 1, std::bind(&OccupancygridCreator::callbackPositionObstacleLines, this, std::placeholders::_1, i));
         }
     }
 
@@ -197,15 +222,47 @@ void OccupancygridCreator::createMap(const ros::TimerEvent& event)
         nav_msgs::OccupancyGrid new_gridmap = gridmap_;
         std::vector<double> x;
         std::vector<double> y;
+        cv::Mat occupancy_image = cv::Mat(new_gridmap.info.width, new_gridmap.info.height, CV_8UC1, new_gridmap.data.data());
+
         for (long unsigned int i=0; i<state_msgs_stored_.size(); i++)
         {
             if (!state_received_[i]){continue;};
-            ROS_WARN_STREAM("found :" << state_msgs_stored_[i].pose.position.x);
-            double x = state_msgs_stored_[i].pose.position.x;
-            double y = state_msgs_stored_[i].pose.position.y;
-            placeObstacleInGrid(new_gridmap, x, y, receiving_obstacle_radius_[i]);
+
+            double x = state_msgs_stored_[i].transform.translation.x;
+            double y = state_msgs_stored_[i].transform.translation.y;
+
+            tf2::Quaternion q_tf;
+            tf2::convert(state_msgs_stored_[i].transform.rotation , q_tf);
+            tf2Scalar roll, pitch, yaw;
+
+            tf2::Matrix3x3(q_tf).getEulerYPR(yaw, pitch, roll);
+    
+            double yaw_degree = yaw * 180 / 3.14159265358979323846;
+            placeSquareInImage(new_gridmap, occupancy_image, x, y, receiving_obstacle_squares_length_[i], receiving_obstacle_squares_width_[i], yaw_degree, receiving_obstacle_squares_line_thickness_[i]);
         }
+
+        for (long unsigned int i=0; i<state_msgs_lines_stored_.size(); i++)
+        {
+            if (!state_received_lines_[i]){continue;};
+
+            double x = state_msgs_lines_stored_[i].transform.translation.x;
+            double y = state_msgs_lines_stored_[i].transform.translation.y;
+            ROS_WARN_STREAM("x: " << x << " y: " << y);
+
+            tf2::Quaternion q_tf;
+            tf2::convert(state_msgs_lines_stored_[i].transform.rotation , q_tf);
+            tf2Scalar roll, pitch, yaw;
+
+            tf2::Matrix3x3(q_tf).getEulerYPR(yaw, pitch, roll);
+    
+            double yaw_degree = yaw * 180 / 3.14159265358979323846;
+            placeLineInImage(new_gridmap, occupancy_image, x, y, receiving_obstacle_lines_length_[i], yaw_degree, receiving_obstacle_lines_line_thickness_[i]);
+        }
+
+        new_gridmap.data = std::vector<int8_t>(occupancy_image.data, occupancy_image.data + occupancy_image.total());
         pub_map_.publish(new_gridmap);
+
+
 
         return;
     } else if (receiving_obstacle_position_gazebo_use_ && state_gazebo_received_)
@@ -280,13 +337,19 @@ void OccupancygridCreator::placeSquareInImage(nav_msgs::OccupancyGrid &gridmap, 
 
 void OccupancygridCreator::placeLineInImage(nav_msgs::OccupancyGrid &gridmap, cv::Mat &occupancy_image, double x_cur, double y_cur, double length, double orientation, double line_thickness)
 {
-    placeSquareInImage(gridmap, occupancy_image, x_cur, y_cur, length, 0.001, orientation, line_thickness);
+    placeSquareInImage(gridmap, occupancy_image, x_cur, y_cur, 0.001, length, orientation, line_thickness);
 }
 
-void OccupancygridCreator::callbackPositionObstacle(const geometry_msgs::PoseStamped::ConstPtr &msg, const long unsigned int i)
+void OccupancygridCreator::OccupancygridCreator::callbackPositionObstacleSquares(const geometry_msgs::TransformStamped::ConstPtr &msg, const long unsigned int i)
 {
     state_msgs_stored_[i] = *msg;
     state_received_[i] = true;
+}
+
+void OccupancygridCreator::OccupancygridCreator::callbackPositionObstacleLines(const geometry_msgs::TransformStamped::ConstPtr &msg, const long unsigned int i)
+{
+    state_msgs_lines_stored_[i] = *msg;
+    state_received_lines_[i] = true;
 }
 
 void OccupancygridCreator::callbackPositionObstacleGazebo(const gazebo_msgs::ModelStates &msg)

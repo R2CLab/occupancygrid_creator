@@ -7,6 +7,7 @@
 #include <nav_msgs/Odometry.h>
 #include <gazebo_msgs/ModelStates.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/TransformStamped.h>
 #include <opencv2/core/core.hpp>
 
 class OccupancygridCreator
@@ -17,15 +18,26 @@ public:
 
     // ros messages
     nav_msgs::OccupancyGrid gridmap_;
-    std::vector<geometry_msgs::PoseStamped> state_msgs_stored_;
-    geometry_msgs::PoseStamped state_msgs_stored_2_;
+    std::vector<geometry_msgs::TransformStamped> state_msgs_stored_;
+    std::vector<geometry_msgs::TransformStamped> state_msgs_lines_stored_;
+
+    // Image
+    cv::Mat occupancy_image_;
+
+
+    std::vector<double> receiving_obstacle_squares_length_;
+    std::vector<double> receiving_obstacle_squares_width_;
+    std::vector<double> receiving_obstacle_squares_line_thickness_;
+    std::vector<double> receiving_obstacle_squares_orientation_;
+    std::vector<double> receiving_obstacle_lines_length_;
+    std::vector<double> receiving_obstacle_lines_line_thickness_;
 
     // ros publisher
     ros::Publisher pub_map_;
 
     // ros subscribers
     std::vector<ros::Subscriber> subs_vector_;
-    ros::Subscriber subs_vector_test_;
+    std::vector<ros::Subscriber> subs_vector_lines_;
     ros::Subscriber sub_gazebo_;
 
 
@@ -34,11 +46,14 @@ public:
     bool receiving_obstacle_position_use_;
     std::vector<double> receiving_obstacle_radius_;
     std::vector<bool>state_received_;
+    std::vector<bool>state_received_lines_;
     //// received gazebo obstacle
     bool receiving_obstacle_position_gazebo_use_;
     double receiving_obstacle_gazebo_radius_;
     bool state_gazebo_received_;
     gazebo_msgs::ModelStates state_msgs_gazebo_stored_;
+
+
 
     OccupancygridCreator(ros::NodeHandle &node_handle);
 
@@ -58,9 +73,8 @@ public:
 
     void placeLineInImage(nav_msgs::OccupancyGrid &gridmap, cv::Mat &occupancy_image, double x_cur, double y_cur, double length, double orientation, double line_thickness);
 
-    void callbackPositionObstacle(const geometry_msgs::PoseStamped::ConstPtr &msg, const long unsigned int i);
-    
-    void callbackPositionObstacle2(const geometry_msgs::PoseStamped msg);
+    void callbackPositionObstacleSquares(const geometry_msgs::TransformStamped::ConstPtr &msg, const long unsigned int i);
+    void callbackPositionObstacleLines(const geometry_msgs::TransformStamped::ConstPtr &msg, const long unsigned int i);
 
     void callbackPositionObstacleGazebo(const gazebo_msgs::ModelStates &msg);
 };
