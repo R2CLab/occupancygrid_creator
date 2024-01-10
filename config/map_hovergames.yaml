@@ -14,9 +14,9 @@ obstacles:
   create_static:
     use: true
     circles:
-      x_center: []
-      y_center: []
-      radius: []
+      x_center: [0, 2]
+      y_center: [-0.25, -0.75]
+      radius: [0.5, 0.5]
     squares:
       x_center: [0]
       y_center: [0]
@@ -25,7 +25,7 @@ obstacles:
       orientation_deg: [0]
       line_thickness: [0.10]
   receiving_position:
-    use: true
+    use: false
     circles:
       topics: []
       radius: []
