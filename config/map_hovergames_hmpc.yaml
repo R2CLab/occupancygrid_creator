@@ -1,0 +1,44 @@
+gridmap:
+  frequency: 1        # which frequency do we want to send an updated map?
+  map_id: "map"      # map name
+  size_x: 12           # size of x in meters
+  size_y: 12           # size of y in meters
+  resolution: 0.01    # size of each grid
+  map_origin_x: 0     # center x position of the map
+  map_origin_y: 0     # center y position of the map
+  publish_topic: "/costmap_node/costmap/costmap" # The topic name of the map publisher 
+
+
+
+obstacles:
+  create_static:
+    use: true
+    circles:
+      x_center: []
+      y_center: []
+      radius: []
+    squares:
+      x_center: [0]
+      y_center: [0]
+      length: [0.6]
+      width: [1.2]
+      orientation_deg: [45] # 0 orientation means length is in x-direction
+      line_thickness: [0.01]
+  receiving_position:
+    use: false
+    circles:
+      topics: []
+      radius: []
+    rectangles:
+      topics: [/obstacles/rectangle2x1_1, /obstacles/rectangle2x1_2,/obstacles/rectangle2x1_3]
+      lengths: [0.6, 0.6, 2.4]
+      widths: [1.2, 1.2, 0.6]
+      line_thickness: [0.05, 0.05, 0.05]
+    lines:
+      topics: [/obstacles/line1, /obstacles/line2, /obstacles/line3]
+      lengths: [1.75, 1.75, 2.5]
+      line_thickness: [0.1, 0.1, 0.1]
+  receiving_position_gazebo:
+    use: false
+    topic: "/gazebo/model_states"
+    radius: 0.5
