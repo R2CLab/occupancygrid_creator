@@ -18,12 +18,12 @@ obstacles:
       y_center: []
       radius: []
     squares:
-      x_center: [0]
-      y_center: [0]
-      length: [0.6]
-      width: [1.2]
-      orientation_deg: [45] # 0 orientation means length is in x-direction
-      line_thickness: [0.01]
+      x_center: [0, 0]
+      y_center: [0, 0]
+      length: [8, 0.6]
+      width: [7, 1.2]
+      orientation_deg: [0, 45] # 0 orientation means length is in x-direction
+      line_thickness: [0.01, 0.01]
   receiving_position:
     use: false
     circles:
