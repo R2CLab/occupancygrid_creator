@@ -1,15 +1,18 @@
 
 #include <occupancygrid_creator/occupancygrid_creator.h>
 
-
-#include <memory>
+#include <algorithm>
 #include <cmath>
+#include <memory>
+
 #include <boost/bind/bind.hpp>
 #include <boost/bind/placeholders.hpp>
+
 #include <opencv2/core/types.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include <tf/transform_datatypes.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
@@ -32,17 +35,6 @@ bool OccupancygridCreator::loadConfig()
     double map_center_y;
     std::string map_id;
     std::string publish_topic;
-
-    bool static_obstacle_use;
-    std::vector<double> static_circles_x;
-    std::vector<double> static_circles_y;
-    std::vector<double> static_circles_radius;
-    std::vector<double> static_squares_x;
-    std::vector<double> static_squares_y;
-    std::vector<double> static_squares_length;
-    std::vector<double> static_squares_width;
-    std::vector<double> static_squares_orientation;
-    std::vector<double> static_squares_line_thickness;
 
 
 
@@ -67,16 +59,16 @@ bool OccupancygridCreator::loadConfig()
 
     if (!nh_.param("/obstacles/create_static/use", static_obstacle_use, false)){defaultFunc("/obstacle/use");};
 
-    if (!nh_.param("/obstacles/create_static/circles/x_center", static_circles_x, {})){defaultFunc("/obstacle/create_static/circle/x_center");};
-    if (!nh_.param("/obstacles/create_static/circles/y_center", static_circles_y, {})){defaultFunc("/obstacle/create_static/circle/y_center");};
-    if (!nh_.param("/obstacles/create_static/circles/radius", static_circles_radius, {})){defaultFunc("/obstacle/create_static/circle/radius");};
+    if (!nh_.param("/obstacles/create_static/circles/x_center", static_circles_x_, {})){defaultFunc("/obstacle/create_static/circle/x_center");};
+    if (!nh_.param("/obstacles/create_static/circles/y_center", static_circles_y_, {})){defaultFunc("/obstacle/create_static/circle/y_center");};
+    if (!nh_.param("/obstacles/create_static/circles/radius", static_circles_radius_, {})){defaultFunc("/obstacle/create_static/circle/radius");};
 
-    if (!nh_.param("/obstacles/create_static/squares/x_center", static_squares_x, {})){defaultFunc("/obstacle_create_static/square/x_center");};
-    if (!nh_.param("/obstacles/create_static/squares/y_center", static_squares_y, {})){defaultFunc("/obstacle_create_static/square/y_center");};
-    if (!nh_.param("/obstacles/create_static/squares/length", static_squares_length, {})){defaultFunc("/obstacle_create_static/square/length");};
-    if (!nh_.param("/obstacles/create_static/squares/width", static_squares_width, {})){defaultFunc("/obstacle_create_static/square/width");};
-    if (!nh_.param("/obstacles/create_static/squares/orientation_deg", static_squares_orientation, {})){defaultFunc("/obstacle_create_static/square/rotation");};
-    if (!nh_.param("/obstacles/create_static/squares/line_thickness", static_squares_line_thickness, {})){defaultFunc("/obstacle_create_static/square/line_thickness");};
+    if (!nh_.param("/obstacles/create_static/squares/x_center", static_squares_x_, {})){defaultFunc("/obstacle_create_static/square/x_center");};
+    if (!nh_.param("/obstacles/create_static/squares/y_center", static_squares_y_, {})){defaultFunc("/obstacle_create_static/square/y_center");};
+    if (!nh_.param("/obstacles/create_static/squares/length", static_squares_length_, {})){defaultFunc("/obstacle_create_static/square/length");};
+    if (!nh_.param("/obstacles/create_static/squares/width", static_squares_width_, {})){defaultFunc("/obstacle_create_static/square/width");};
+    if (!nh_.param("/obstacles/create_static/squares/orientation_deg", static_squares_orientation_, {})){defaultFunc("/obstacle_create_static/square/rotation");};
+    if (!nh_.param("/obstacles/create_static/squares/line_thickness", static_squares_line_thickness_, {})){defaultFunc("/obstacle_create_static/square/line_thickness");};
 
     if (!nh_.param("/obstacles/receiving_position/use", receiving_obstacle_position_use_, false)){defaultFunc("/receiving_position/use");};
 
@@ -95,6 +87,11 @@ bool OccupancygridCreator::loadConfig()
     if (!nh_.param("/obstacles/receiving_position_gazebo/use", receiving_obstacle_position_gazebo_use_, false)){defaultFunc("/receiving_position_gazebo/use");};
     if (!nh_.param("/obstacles/receiving_position_gazebo/topic", receiving_obstacle_position_gazebo_topic, std::string("temp"))){defaultFunc("/receiving_position_gazebo/topic");};
     if (!nh_.param("/obstacles/receiving_position_gazebo/radius", receiving_obstacle_gazebo_radius_, 1.0)){defaultFunc("/receiving_position_gazebo/radius");};
+
+    if (!nh_.param("/visualization/static_circle_indices_to_visualize", static_circle_indices_to_visualize_, {})){defaultFunc("/visualization/static_circle_indices_to_visualize");};
+    if (!nh_.param("/visualization/static_square_indices_to_visualize", static_square_indices_to_visualize_, {})){defaultFunc("/visualization/static_square_indices_to_visualize");};
+    if (!nh_.param("/visualization/marker_z", marker_z_, 1.8)){defaultFunc("/visualization/marker_z");};
+    if (!nh_.param("/visualization/marker_color", marker_color_, {0, 0, 0, 1})){defaultFunc("/visualization/marker_color");};
 
     gridmap_.header.stamp = ros::Time::now();
     gridmap_.header.frame_id = map_id;
@@ -120,29 +117,34 @@ bool OccupancygridCreator::loadConfig()
     // Check if we need to create static obstacles
     if (static_obstacle_use)
     {
-        if (!(static_circles_x.size() == static_circles_y.size()) || !(static_circles_x.size() == static_circles_radius.size()))
+        if (!(static_circles_x_.size() == static_circles_y_.size()) || !(static_circles_x_.size() == static_circles_radius_.size()))
         {
             ROS_ERROR_STREAM("[Occupancygrid Creator]: Parameters static circles x, y and radius dont have the same length!");
             return false;
         }
 
-        createStaticObstacles(static_circles_x, static_circles_y, static_circles_radius);
+        createStaticObstacles(static_circles_x_, static_circles_y_, static_circles_radius_);
 
 
-        if (!(static_squares_x.size() == static_squares_y.size()) || !(static_squares_x.size() == static_squares_length.size()) ||
-            !(static_squares_x.size() == static_squares_length.size()) || !(static_squares_x.size() == static_squares_width.size()) ||
-            !(static_squares_x.size() == static_squares_orientation.size()))
+        if (!(static_squares_x_.size() == static_squares_y_.size()) || !(static_squares_x_.size() == static_squares_length_.size()) ||
+            !(static_squares_x_.size() == static_squares_length_.size()) || !(static_squares_x_.size() == static_squares_width_.size()) ||
+            !(static_squares_x_.size() == static_squares_orientation_.size()))
         {
             ROS_ERROR_STREAM("[Occupancygrid Creator]: Parameters static squares x, y, length, width and orientation dont have the same length!");
             return false;
         }
 
-        for (long unsigned int i=0; i<static_squares_x.size(); i++)
+        for (long unsigned int i=0; i<static_squares_x_.size(); i++)
         {
-            placeSquareInImage(gridmap_, occupancy_image_, static_squares_x[i], static_squares_y[i], static_squares_length[i], static_squares_width[i], static_squares_orientation[i], static_squares_line_thickness[i]);
+            placeSquareInImage(gridmap_, occupancy_image_, static_squares_x_[i], static_squares_y_[i], static_squares_length_[i], static_squares_width_[i], static_squares_orientation_[i], static_squares_line_thickness_[i]);
         }
 
     }
+
+    // Visualization
+    std::string visualization_topic = "/obstacles/visualization";
+    std::string target_frame = "map";
+    static_obstacles_marker_pub_.reset(new ROSMarkerPublisher(nh_, visualization_topic.c_str(), target_frame, static_circles_x_.size()+static_squares_x_.size()));
 
 
 
@@ -193,7 +195,6 @@ bool OccupancygridCreator::loadConfig()
     }
 
     timer_ = nh_.createTimer(ros::Duration(1.0 / frequency), &OccupancygridCreator::createMap, this);
-
 
     // Show in a window
     //cv::imshow("rectangles", test_image);
@@ -288,6 +289,8 @@ void OccupancygridCreator::createMap(const ros::TimerEvent& event)
 
     pub_map_.publish(gridmap_);
 
+    createStaticObstacleVisualizations();
+    publishStaticObstacleVisualizations();
 }
 
 void OccupancygridCreator::createStaticObstacles(std::vector<double> x, std::vector<double> y, std::vector<double> radius)
@@ -356,4 +359,34 @@ void OccupancygridCreator::callbackPositionObstacleGazebo(const gazebo_msgs::Mod
 {
     state_msgs_gazebo_stored_ = msg;
     state_gazebo_received_ = true;
+}
+
+void OccupancygridCreator::createStaticObstacleVisualizations()
+{
+    for (long unsigned int i=0; i<static_circles_x_.size(); i++)
+    {
+        if (std::find(static_circle_indices_to_visualize_.begin(), static_circle_indices_to_visualize_.end(), i) != static_circle_indices_to_visualize_.end())
+        {
+            ROSPointMarker &static_obstacle = static_obstacles_marker_pub_->getNewPointMarker("CYLINDER");
+            static_obstacle.setColor(marker_color_[0], marker_color_[1], marker_color_[2], marker_color_[3]);
+            static_obstacle.setScale(2*static_circles_radius_[i], 2*static_circles_radius_[i], marker_z_);
+            static_obstacle.addPointMarker(Eigen::Vector3d(static_circles_x_[i], static_circles_y_[i], marker_z_/2));
+        }
+    }
+    for (long unsigned int i=0; i<static_squares_x_.size(); i++)
+    {
+        if (std::find(static_square_indices_to_visualize_.begin(), static_square_indices_to_visualize_.end(), i) != static_square_indices_to_visualize_.end())
+        {
+            ROSPointMarker &static_obstacle = static_obstacles_marker_pub_->getNewPointMarker("CUBE");
+            static_obstacle.setColor(marker_color_[0], marker_color_[1], marker_color_[2], marker_color_[3]);
+            static_obstacle.setScale(static_squares_length_[i], static_squares_width_[i], marker_z_);
+            static_obstacle.setOrientation(static_squares_orientation_[i] * M_PI / 180);
+            static_obstacle.addPointMarker(Eigen::Vector3d(static_squares_x_[i], static_squares_y_[i], marker_z_/2));
+        }
+    }
+}
+
+void OccupancygridCreator::publishStaticObstacleVisualizations()
+{
+    static_obstacles_marker_pub_->publish();
 }

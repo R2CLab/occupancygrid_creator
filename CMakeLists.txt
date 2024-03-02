@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   nav_msgs
+  visualization_msgs
 )
 
 find_package(OpenCV REQUIRED)
@@ -21,6 +22,7 @@ find_package(Eigen3 REQUIRED)
 # Define the current package
 catkin_package(
   CATKIN_DEPENDS roscpp
+                 tf
                  sensor_msgs
                  nav_msgs
                  geometry_msgs
@@ -39,10 +41,12 @@ include_directories(
 
 set(LIBRARY_HEADERS ${LIBRARY_HEADERS}
   include/${PROJECT_NAME}/occupancygrid_creator.h
+  include/${PROJECT_NAME}/ros_visuals.h
 )
 
 set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
   src/occupancygrid_creator.cpp
+  src/ros_visuals.cpp
 )
 
 

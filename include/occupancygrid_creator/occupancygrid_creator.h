@@ -1,14 +1,20 @@
 #ifndef OCCUPANCYGRID_CREATOR_OCCUPANCYGRID_CREATOR_H
 #define OCCUPANCYGRID_CREATOR_OCCUPANCYGRID_CREATOR_H
 
-#include <ros/ros.h>
+#include <math.h>
 #include <string>
+
+#include <opencv2/core/core.hpp>
+
+#include <ros/ros.h>
+
 #include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/Odometry.h>
 #include <gazebo_msgs/ModelStates.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TransformStamped.h>
-#include <opencv2/core/core.hpp>
+
+#include <occupancygrid_creator/ros_visuals.h>
 
 class OccupancygridCreator
 {
@@ -24,7 +30,19 @@ public:
     // Image
     cv::Mat occupancy_image_;
 
+    // Static obstacles
+    bool static_obstacle_use;
+    std::vector<double> static_circles_x_;
+    std::vector<double> static_circles_y_;
+    std::vector<double> static_circles_radius_;
+    std::vector<double> static_squares_x_;
+    std::vector<double> static_squares_y_;
+    std::vector<double> static_squares_length_;
+    std::vector<double> static_squares_width_;
+    std::vector<double> static_squares_orientation_;
+    std::vector<double> static_squares_line_thickness_;
 
+    // Dynamic obstacles
     std::vector<double> receiving_obstacle_squares_length_;
     std::vector<double> receiving_obstacle_squares_width_;
     std::vector<double> receiving_obstacle_squares_line_thickness_;
@@ -54,6 +72,12 @@ public:
     gazebo_msgs::ModelStates state_msgs_gazebo_stored_;
 
 
+    // Visualization
+    std::unique_ptr<ROSMarkerPublisher> static_obstacles_marker_pub_;
+    std::vector<double> static_circle_indices_to_visualize_, static_square_indices_to_visualize_;
+    std::vector<double> marker_color_;
+    double marker_z_;
+
 
     OccupancygridCreator(ros::NodeHandle &node_handle);
 
@@ -77,6 +101,9 @@ public:
     void callbackPositionObstacleLines(const geometry_msgs::TransformStamped::ConstPtr &msg, const long unsigned int i);
 
     void callbackPositionObstacleGazebo(const gazebo_msgs::ModelStates &msg);
+
+    void createStaticObstacleVisualizations();
+    void publishStaticObstacleVisualizations();
 };
 
 #endif

@@ -42,3 +42,9 @@ obstacles:
     use: false
     topic: "/gazebo/model_states"
     radius: 0.5
+
+visualization:
+  static_circle_indices_to_visualize: [0]
+  static_square_indices_to_visualize: [1]
+  marker_color: [0.7, 0.7, 0.7, 1]
+  marker_z: 1.8
