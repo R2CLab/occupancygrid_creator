@@ -18,12 +18,12 @@ obstacles:
       y_center: []
       radius: []
     squares:
-      x_center: [0, 0]
-      y_center: [0, 0]
-      length: [8, 0.6]
-      width: [7, 1.2]
-      orientation_deg: [0, 45] # 0 orientation means length is in x-direction
-      line_thickness: [0.01, 0.01]
+      x_center: [0, -1.2, 1.2]
+      y_center: [0, 0.1, -0.1]
+      length: [8, 0.6, 0.6]
+      width: [7, 1.2, 1.2]
+      orientation_deg: [0, 30, 30] # 0 orientation means length is in x-direction
+      line_thickness: [0.01, 0.01, 0.01]
   receiving_position:
     use: false
     circles:
@@ -45,6 +45,6 @@ obstacles:
 
 visualization:
   static_circle_indices_to_visualize: [0]
-  static_square_indices_to_visualize: [1]
+  static_square_indices_to_visualize: [1, 2]
   marker_color: [0.7, 0.7, 0.7, 1]
   marker_z: 1.8
