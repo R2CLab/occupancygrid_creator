@@ -1,4 +1,3 @@
-
 #include <occupancygrid_creator/occupancygrid_creator.h>
 
 #include <algorithm>
@@ -15,6 +14,8 @@
 #include <tf/transform_datatypes.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
+#include <geometry_msgs/PoseStamped.h>
 
 OccupancygridCreator::OccupancygridCreator(ros::NodeHandle &node_handle)
     :nh_(node_handle)
@@ -88,6 +89,13 @@ bool OccupancygridCreator::loadConfig()
     if (!nh_.param("/obstacles/receiving_position_gazebo/topic", receiving_obstacle_position_gazebo_topic, std::string("temp"))){defaultFunc("/receiving_position_gazebo/topic");};
     if (!nh_.param("/obstacles/receiving_position_gazebo/radius", receiving_obstacle_gazebo_radius_, 1.0)){defaultFunc("/receiving_position_gazebo/radius");};
 
+    // Recording
+    if (!nh_.param("/recording/static_circle_indices_to_record", static_circle_indices_to_record_, {})){defaultFunc("/recording/static_circle_indices_to_record");};
+    if (!nh_.param("/obstacles/create_static/circles/names", static_circle_names_, {})){defaultFunc("/obstacles/create_static/circles/names");};
+    if (!nh_.param("/recording/static_square_indices_to_record", static_square_indices_to_record_, {})){defaultFunc("/recording/static_square_indices_to_record");};
+    if (!nh_.param("/obstacles/create_static/squares/names", static_square_names_, {})){defaultFunc("/obstacles/create_static/squares/names");};
+
+    // Visualization
     if (!nh_.param("/visualization/static_circle_indices_to_visualize", static_circle_indices_to_visualize_, {})){defaultFunc("/visualization/static_circle_indices_to_visualize");};
     if (!nh_.param("/visualization/static_square_indices_to_visualize", static_square_indices_to_visualize_, {})){defaultFunc("/visualization/static_square_indices_to_visualize");};
     if (!nh_.param("/visualization/marker_z", marker_z_, 1.8)){defaultFunc("/visualization/marker_z");};
@@ -142,9 +150,8 @@ bool OccupancygridCreator::loadConfig()
     }
 
     // Visualization
-    std::string visualization_topic = "/obstacles/visualization";
-    std::string target_frame = "map";
-    static_obstacles_marker_pub_.reset(new ROSMarkerPublisher(nh_, visualization_topic.c_str(), target_frame, static_circles_x_.size()+static_squares_x_.size()));
+    std::string visualization_topic = "/grid/obs/vis";
+    static_obstacles_marker_pub_.reset(new ROSMarkerPublisher(nh_, visualization_topic.c_str(), target_frame_, static_circles_x_.size()+static_squares_x_.size()));
 
 
 
@@ -192,6 +199,25 @@ bool OccupancygridCreator::loadConfig()
     if (receiving_obstacle_position_gazebo_use_)
     {
         sub_gazebo_ = nh_.subscribe(receiving_obstacle_position_gazebo_topic, 1, &OccupancygridCreator::callbackPositionObstacleGazebo, this);
+    }
+
+    // Create recording publishers
+    obs_rec_circle_pubs_.resize(static_circles_x_.size());
+    for (long unsigned int i=0; i<static_circles_x_.size(); i++)
+    {
+        if (std::find(static_circle_indices_to_record_.begin(), static_circle_indices_to_record_.end(), i) != static_circle_indices_to_record_.end())
+        {
+            obs_rec_circle_pubs_[i] = nh_.advertise<geometry_msgs::PoseStamped>(recording_topic_base_+static_circle_names_[i], 1);
+        }
+    }
+
+    obs_rec_square_pubs_.resize(static_squares_x_.size());
+    for (long unsigned int i=0; i<static_squares_x_.size(); i++)
+    {
+        if (std::find(static_square_indices_to_record_.begin(), static_square_indices_to_record_.end(), i) != static_square_indices_to_record_.end())
+        {
+            obs_rec_square_pubs_[i] = nh_.advertise<geometry_msgs::PoseStamped>(recording_topic_base_+static_square_names_[i], 1);
+        }
     }
 
     timer_ = nh_.createTimer(ros::Duration(1.0 / frequency), &OccupancygridCreator::createMap, this);
@@ -289,6 +315,7 @@ void OccupancygridCreator::createMap(const ros::TimerEvent& event)
 
     pub_map_.publish(gridmap_);
 
+    publishStaticObstacles();
     createStaticObstacleVisualizations();
     publishStaticObstacleVisualizations();
 }
@@ -359,6 +386,52 @@ void OccupancygridCreator::callbackPositionObstacleGazebo(const gazebo_msgs::Mod
 {
     state_msgs_gazebo_stored_ = msg;
     state_gazebo_received_ = true;
+}
+
+void OccupancygridCreator::publishStaticObstacles()
+{
+    // Create base obstacle message
+    geometry_msgs::PoseStamped msg;
+    msg.header.frame_id = target_frame_;
+    msg.header.stamp = ros::Time::now();
+
+    // Publish all static circle messages
+    for (long unsigned int i=0; i<static_circles_x_.size(); i++)
+    {
+        if (std::find(static_circle_indices_to_record_.begin(), static_circle_indices_to_record_.end(), i) != static_circle_indices_to_record_.end())
+        {
+            // Fill dynamic message content
+            msg.pose.position.x = static_circles_x_[i];
+            msg.pose.position.y = static_circles_y_[i];
+            msg.pose.position.z = 0;
+            msg.pose.orientation.x = 0;
+            msg.pose.orientation.y = 0;
+            msg.pose.orientation.z = 0;
+            msg.pose.orientation.w = 1;
+            obs_rec_circle_pubs_[i].publish(msg);
+        }
+    }
+
+    // Publish all static square messages
+    tf2::Quaternion q;
+    for (long unsigned int i=0; i<static_squares_x_.size(); i++)
+    {
+        if (std::find(static_square_indices_to_record_.begin(), static_square_indices_to_record_.end(), i) != static_square_indices_to_record_.end())
+        {
+            // Obtain quaternion from orientation
+            q.setRPY(0, 0, static_squares_orientation_[i] * M_PI / 180);
+
+            // Fill dynamic message content
+            msg.pose.position.x = static_squares_x_[i];
+            msg.pose.position.y = static_squares_y_[i];
+            msg.pose.position.z = 0;
+            msg.pose.orientation.x = q.x();
+            msg.pose.orientation.y = q.y();
+            msg.pose.orientation.z = q.z();
+            msg.pose.orientation.w = q.w();
+            obs_rec_square_pubs_[i].publish(msg);
+        }
+    }
 }
 
 void OccupancygridCreator::createStaticObstacleVisualizations()

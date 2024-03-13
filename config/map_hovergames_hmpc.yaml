@@ -17,6 +17,7 @@ obstacles:
       x_center: []
       y_center: []
       radius: []
+      names: []
     squares:
       x_center: [0, -1.2, 1.2]
       y_center: [0, 0.1, -0.1]
@@ -24,6 +25,7 @@ obstacles:
       width: [7, 1.2, 1.2]
       orientation_deg: [0, 30, 30] # 0 orientation means length is in x-direction
       line_thickness: [0.01, 0.01, 0.01]
+      names: ["bounds", "rectangle2x1_0", "rectangle2x1_1"]
   receiving_position:
     use: false
     circles:
@@ -43,8 +45,12 @@ obstacles:
     topic: "/gazebo/model_states"
     radius: 0.5
 
+recording:
+  static_circle_indices_to_record: []
+  static_square_indices_to_record: [1, 2]
+
 visualization:
-  static_circle_indices_to_visualize: [0]
+  static_circle_indices_to_visualize: []
   static_square_indices_to_visualize: [1, 2]
   marker_color: [0.7, 0.7, 0.7, 1]
   marker_z: 1.8

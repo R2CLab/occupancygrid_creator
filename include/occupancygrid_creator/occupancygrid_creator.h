@@ -11,7 +11,6 @@
 #include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/Odometry.h>
 #include <gazebo_msgs/ModelStates.h>
-#include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TransformStamped.h>
 
 #include <occupancygrid_creator/ros_visuals.h>
@@ -71,6 +70,12 @@ public:
     bool state_gazebo_received_;
     gazebo_msgs::ModelStates state_msgs_gazebo_stored_;
 
+    // Recording
+    std::string recording_topic_base_ = "/grid/obs/rec/";
+    std::string target_frame_ = "map";
+    std::vector<ros::Publisher> obs_rec_circle_pubs_, obs_rec_square_pubs_;
+    std::vector<double> static_circle_indices_to_record_, static_square_indices_to_record_;
+    std::vector<std::string> static_circle_names_, static_square_names_;
 
     // Visualization
     std::unique_ptr<ROSMarkerPublisher> static_obstacles_marker_pub_;
@@ -102,6 +107,7 @@ public:
 
     void callbackPositionObstacleGazebo(const gazebo_msgs::ModelStates &msg);
 
+    void publishStaticObstacles();
     void createStaticObstacleVisualizations();
     void publishStaticObstacleVisualizations();
 };
