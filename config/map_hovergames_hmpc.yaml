@@ -27,19 +27,19 @@ obstacles:
       line_thickness: [0.01, 0.01, 0.01]
       names: ["bounds", "rectangle2x1_0", "rectangle2x1_1"]
   receiving_position:
-    use: false
+    use: true
     circles:
       topics: []
       radius: []
     rectangles:
-      topics: [/obstacles/rectangle2x1_1, /obstacles/rectangle2x1_2,/obstacles/rectangle2x1_3]
-      lengths: [0.6, 0.6, 2.4]
-      widths: [1.2, 1.2, 0.6]
-      line_thickness: [0.05, 0.05, 0.05]
+      topics: [/obstacles/rectangle2x1_0, /obstacles/rectangle2x1_1]
+      lengths: [1.2, 1.2]
+      widths: [0.6, 0.6]
+      line_thickness: [0.01, 0.01, 0.01]
     lines:
-      topics: [/obstacles/line1, /obstacles/line2, /obstacles/line3]
-      lengths: [1.75, 1.75, 2.5]
-      line_thickness: [0.1, 0.1, 0.1]
+      topics: []
+      lengths: []
+      line_thickness: []
   receiving_position_gazebo:
     use: false
     topic: "/gazebo/model_states"
