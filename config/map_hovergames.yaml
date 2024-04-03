@@ -12,7 +12,7 @@ gridmap:
 
 obstacles:
   inflate: True
-  inflation_thickness: 0.4
+  inflation_thickness: 0.2
   create_static:
     use: true
     circles:
