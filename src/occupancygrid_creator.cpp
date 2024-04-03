@@ -422,8 +422,6 @@ void OccupancygridCreator::placeSquareInImage(nav_msgs::OccupancyGrid &gridmap, 
 
 void OccupancygridCreator::placeInflatedSquareInImage(nav_msgs::OccupancyGrid &gridmap, cv::Mat &occupancy_image, double x_cur, double y_cur, double length, double width, double orientation, double inflation_thickness)
 {
-    int x_on_grid = (x_cur-gridmap.info.origin.position.x)/gridmap.info.resolution;
-    int y_on_grid = (y_cur-gridmap.info.origin.position.y)/gridmap.info.resolution;
     int length_on_grid = length/gridmap.info.resolution;
     int width_on_grid = width/gridmap.info.resolution;
 
