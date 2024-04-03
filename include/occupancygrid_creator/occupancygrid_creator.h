@@ -40,6 +40,8 @@ public:
     std::vector<double> static_squares_width_;
     std::vector<double> static_squares_orientation_;
     std::vector<double> static_squares_line_thickness_;
+    bool inflate_;
+    double inflation_thickness_;
 
     // Dynamic obstacles
     std::vector<double> receiving_obstacle_squares_length_;
@@ -99,6 +101,10 @@ public:
     void placeObstacleInGrid(nav_msgs::OccupancyGrid &gridmap, double x_cur, double y_cur, double radius_cur);
 
     void placeSquareInImage(nav_msgs::OccupancyGrid &gridmap, cv::Mat &occupancy_image, double x_cur, double y_cur, double length, double width, double orientation, double line_thickness);
+
+    void placeInflatedSquareInImage(nav_msgs::OccupancyGrid &gridmap, cv::Mat &occupancy_image, double x_cur, double y_cur, double length, double width, double orientation, double inflation_thickness);
+
+    void drawRoundedRect(cv::Mat &image, cv::Point center, int width, int height, int cornerRadius, double angle, cv::Scalar color, int thickness);
 
     void placeLineInImage(nav_msgs::OccupancyGrid &gridmap, cv::Mat &occupancy_image, double x_cur, double y_cur, double length, double orientation, double line_thickness);
 

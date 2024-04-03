@@ -58,6 +58,8 @@ bool OccupancygridCreator::loadConfig()
     if (!nh_.getParam("/gridmap/map_origin_y", map_center_y)){return errorFunc("/gridmap/map_origin_y");};
     if (!nh_.getParam("/gridmap/publish_topic", publish_topic)){return errorFunc("/gridmap/publish_topic");};
 
+    if (!nh_.param("/obstacles/inflate", inflate_, false)){defaultFunc("/obstacle_create_static/square/inflate");};
+    if (!nh_.param("/obstacles/inflation_thickness", inflation_thickness_, 0.01)){defaultFunc("/obstacle_create_static/square/inflation_thickness");};
     if (!nh_.param("/obstacles/create_static/use", static_obstacle_use, false)){defaultFunc("/obstacle/use");};
 
     if (!nh_.param("/obstacles/create_static/circles/x_center", static_circles_x_, {})){defaultFunc("/obstacle/create_static/circle/x_center");};
@@ -71,6 +73,7 @@ bool OccupancygridCreator::loadConfig()
     if (!nh_.param("/obstacles/create_static/squares/orientation_deg", static_squares_orientation_, {})){defaultFunc("/obstacle_create_static/square/rotation");};
     if (!nh_.param("/obstacles/create_static/squares/line_thickness", static_squares_line_thickness_, {})){defaultFunc("/obstacle_create_static/square/line_thickness");};
 
+
     if (!nh_.param("/obstacles/receiving_position/use", receiving_obstacle_position_use_, false)){defaultFunc("/receiving_position/use");};
 
     if (!nh_.param("/obstacles/receiving_position/circles/topics", receiving_obstacle_position_circles_topics, {})){defaultFunc("/receiving_position/circles/topic");};
@@ -80,6 +83,8 @@ bool OccupancygridCreator::loadConfig()
     if (!nh_.param("/obstacles/receiving_position/rectangles/lengths", receiving_obstacle_squares_length_, {})){defaultFunc("/receiving_position/squares/length");};
     if (!nh_.param("/obstacles/receiving_position/rectangles/widths", receiving_obstacle_squares_width_, {})){defaultFunc("/receiving_position/squares/width");};
     if (!nh_.param("/obstacles/receiving_position/rectangles/line_thickness", receiving_obstacle_squares_line_thickness_, {})){defaultFunc("/receiving_position/squares/line_thickness");};
+
+    
 
     if (!nh_.param("/obstacles/receiving_position/lines/topics", receiving_obstacle_position_lines_topics, {})){defaultFunc("/receiving_position/lines/topic");};
     if (!nh_.param("/obstacles/receiving_position/lines/lengths", receiving_obstacle_lines_length_, {})){defaultFunc("/receiving_position/lines/length");};
@@ -145,6 +150,11 @@ bool OccupancygridCreator::loadConfig()
         for (long unsigned int i=0; i<static_squares_x_.size(); i++)
         {
             placeSquareInImage(gridmap_, occupancy_image_, static_squares_x_[i], static_squares_y_[i], static_squares_length_[i], static_squares_width_[i], static_squares_orientation_[i], static_squares_line_thickness_[i]);
+
+            // if (inflate_)
+            // {
+            //     placeInflatedSquareInImage(gridmap_, occupancy_image_, static_squares_x_[i], static_squares_y_[i], static_squares_length_[i], static_squares_width_[i], static_squares_orientation_[i], inflation_thickness_);
+            // }
         }
 
     }
@@ -354,6 +364,8 @@ void OccupancygridCreator::placeSquareInImage(nav_msgs::OccupancyGrid &gridmap, 
     int width_on_grid = width/gridmap.info.resolution;
     int line_thickness_on_grid = line_thickness/gridmap.info.resolution;
 
+    int inflation_thickness_on_grid = inflation_thickness_/gridmap.info.resolution;
+
     // first is middle point, then length and width in meters, then orientation in degrees
     cv::RotatedRect rRect = cv::RotatedRect(cv::Point2f(x_on_grid, y_on_grid), cv::Size2f(length_on_grid,width_on_grid), orientation);
     cv::Point2f vertices[4];
@@ -362,7 +374,92 @@ void OccupancygridCreator::placeSquareInImage(nav_msgs::OccupancyGrid &gridmap, 
     {
         cv::line(occupancy_image, vertices[i], vertices[(i+1)%4], cv::Scalar(100), line_thickness_on_grid);
     }
-    //cv::Rect brect = rRect.boundingRect();
+
+    if(inflate_)
+    {
+        // First draw circles around corners
+        for (int i = 0; i < 4; i++)
+        {
+            // Draw the corners
+            cv::circle(occupancy_image, vertices[i], inflation_thickness_on_grid, cv::Scalar(100), 1);
+        }
+
+        // Draw the lines on the outside of the rectangle
+        rRect = cv::RotatedRect(cv::Point2f(x_on_grid, y_on_grid), cv::Size2f(length_on_grid+2*inflation_thickness_on_grid,width_on_grid), orientation);
+        rRect.points(vertices);
+        cv::line(occupancy_image, vertices[0], vertices[1], cv::Scalar(100), 1);
+        cv::line(occupancy_image, vertices[2], vertices[3], cv::Scalar(100), 1);
+
+        rRect = cv::RotatedRect(cv::Point2f(x_on_grid, y_on_grid), cv::Size2f(length_on_grid,width_on_grid+2*inflation_thickness_on_grid), orientation);
+        rRect.points(vertices);
+        cv::line(occupancy_image, vertices[1], vertices[2], cv::Scalar(100), 1);
+        cv::line(occupancy_image, vertices[3], vertices[0], cv::Scalar(100), 1);
+
+        // Draw the lines on the inside of the rectangle if it is possible
+        if (width_on_grid-2*inflation_thickness_on_grid > 0)
+        {
+            rRect = cv::RotatedRect(cv::Point2f(x_on_grid, y_on_grid), cv::Size2f(length_on_grid,width_on_grid-2*inflation_thickness_on_grid), orientation);
+            rRect.points(vertices);
+            cv::line(occupancy_image, vertices[1], vertices[2], cv::Scalar(100), 1);
+            cv::line(occupancy_image, vertices[3], vertices[0], cv::Scalar(100), 1);
+        }
+
+        if (length_on_grid-2*inflation_thickness_on_grid > 0)
+        {
+            rRect = cv::RotatedRect(cv::Point2f(x_on_grid, y_on_grid), cv::Size2f(length_on_grid-2*inflation_thickness_on_grid,width_on_grid), orientation);
+            rRect.points(vertices);
+            cv::line(occupancy_image, vertices[0], vertices[1], cv::Scalar(100), 1);
+            cv::line(occupancy_image, vertices[2], vertices[3], cv::Scalar(100), 1);
+        }
+
+
+
+        
+    
+        
+    }
+}
+
+void OccupancygridCreator::placeInflatedSquareInImage(nav_msgs::OccupancyGrid &gridmap, cv::Mat &occupancy_image, double x_cur, double y_cur, double length, double width, double orientation, double inflation_thickness)
+{
+    int x_on_grid = (x_cur-gridmap.info.origin.position.x)/gridmap.info.resolution;
+    int y_on_grid = (y_cur-gridmap.info.origin.position.y)/gridmap.info.resolution;
+    int length_on_grid = length/gridmap.info.resolution;
+    int width_on_grid = width/gridmap.info.resolution;
+
+    int inflation_thickness_on_grid = inflation_thickness/gridmap.info.resolution;
+
+    cv::Point center(x_cur, y_cur);
+
+    // first is middle point, then length and width in meters, then orientation in degrees
+    drawRoundedRect(occupancy_image, center, width_on_grid+inflation_thickness_on_grid, length_on_grid+inflation_thickness_on_grid, inflation_thickness_on_grid, orientation, cv::Scalar(100), 1);
+}
+
+void OccupancygridCreator::drawRoundedRect(cv::Mat &image, cv::Point center, int width, int height, int cornerRadius, double angle, cv::Scalar color, int thickness)
+{
+    // Create a new image to draw the rounded rectangle
+    cv::Mat rectImage = cv::Mat::zeros(image.size(), image.type());
+
+    std::cerr << "width: " << width << " height: " << height << std::endl;
+
+    // Draw the corners
+    cv::circle(rectImage, cv::Point(cornerRadius, cornerRadius), cornerRadius, color, thickness);
+    cv::circle(rectImage, cv::Point(width - cornerRadius, cornerRadius), cornerRadius, color, thickness);
+    cv::circle(rectImage, cv::Point(cornerRadius, height - cornerRadius), cornerRadius, color, thickness);
+    cv::circle(rectImage, cv::Point(width - cornerRadius, height - cornerRadius), cornerRadius, color, thickness);
+
+    // Draw the straight lines
+    cv::line(rectImage, cv::Point(center.x - width, height+cornerRadius), cv::Point(center.x + width, height+cornerRadius), color, thickness);
+    cv::line(rectImage, cv::Point(center.x - width, height-cornerRadius), cv::Point(center.x + width, height-cornerRadius), color, thickness);
+    cv::line(rectImage, cv::Point(0, cornerRadius), cv::Point(0, height - cornerRadius), color, thickness);
+    cv::line(rectImage, cv::Point(width, cornerRadius), cv::Point(width, height - cornerRadius), color, thickness);
+
+    // Rotate the rectangle image
+    cv::Mat rotationMatrix = cv::getRotationMatrix2D(cv::Point(width / 2, height / 2), angle, 1);
+    cv::warpAffine(rectImage, rectImage, rotationMatrix, rectImage.size());
+
+    // Overlay the rotated rectangle onto the original image
+    rectImage.copyTo(image, rectImage);
 }
 
 void OccupancygridCreator::placeLineInImage(nav_msgs::OccupancyGrid &gridmap, cv::Mat &occupancy_image, double x_cur, double y_cur, double length, double orientation, double line_thickness)

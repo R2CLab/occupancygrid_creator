@@ -11,19 +11,21 @@ gridmap:
 
 
 obstacles:
+  inflate: True
+  inflation_thickness: 0.4
   create_static:
     use: true
     circles:
-      x_center: [0, 2]
-      y_center: [-0.25, -0.75]
-      radius: [0.5, 0.5]
+      x_center: []
+      y_center: []
+      radius: []
     squares:
-      x_center: [0]
-      y_center: [0]
-      length: [8]
-      width: [7]
-      orientation_deg: [0]
-      line_thickness: [0.10]
+      x_center: [0, 0]
+      y_center: [0, 0]
+      length: [8, 1.2]
+      width: [7, 0.6]
+      orientation_deg: [0, 45]
+      line_thickness: [0.10, 0.05]
   receiving_position:
     use: false
     circles:
