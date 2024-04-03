@@ -6,7 +6,7 @@ gridmap:
   resolution: 0.01    # size of each grid
   map_origin_x: 0     # center x position of the map
   map_origin_y: 0     # center y position of the map
-  publish_topic: "/costmap_node/costmap/costmap" # The topic name of the map publisher 
+  publish_topic: "/occupancy_grid" # The topic name of the map publisher 
 
 
 
