@@ -27,7 +27,7 @@ obstacles:
       width: [8.5, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8]
       orientation_deg: [0, 0, 90, 0, 90, 0, 90, 0, 90, 0, 90] # 0 orientation means length is in x-direction
       line_thickness: [0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
-      names: ["bounds", "rectangle2x1_0", "rectangle2x1_1", "rectangle2x1_2", "rectangle2x1_3", "rectangle2x1_4", "rectangle2x1_5", "rectangle2x1_6", "rectangle2x1_7", "rectangle2x1_8", "rectangle2x1_9"]
+      names: ["bounds", "rectangle3x1_0", "rectangle3x1_1", "rectangle3x1_2", "rectangle3x1_3", "rectangle3x1_4", "rectangle3x1_5", "rectangle3x1_6", "rectangle3x1_7", "rectangle3x1_8", "rectangle3x1_9"]
   receiving_position:
     use: true
     circles:
@@ -49,7 +49,7 @@ obstacles:
 
 recording:
   static_circle_indices_to_record: []
-  static_square_indices_to_record: [1, 2]
+  static_square_indices_to_record: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 visualization:
   static_circle_indices_to_visualize: []
