@@ -8,8 +8,6 @@ gridmap:
   map_origin_y: 0     # center y position of the map
   publish_topic: "/occupancy_grid" # The topic name of the map publisher 
 
-
-
 obstacles:
   inflate: True
   inflation_thickness: 0.2 # radius around obstacles to inflate

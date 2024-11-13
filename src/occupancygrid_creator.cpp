@@ -21,10 +21,7 @@ OccupancygridCreator::OccupancygridCreator(ros::NodeHandle &node_handle)
     :nh_(node_handle)
 {
     if (!loadConfig()){ros::shutdown();};
-
-
 }
-
 
 bool OccupancygridCreator::loadConfig()
 {
@@ -37,17 +34,13 @@ bool OccupancygridCreator::loadConfig()
     std::string map_id;
     std::string publish_topic;
 
-
-
     std::vector<std::string> receiving_obstacle_position_circles_topics;
     std::vector<double> receiving_obstacle_circles_radius_;
 
     std::vector<std::string> receiving_obstacle_position_squares_topics;
     std::vector<std::string> receiving_obstacle_position_lines_topics;
 
-
     std::string receiving_obstacle_position_gazebo_topic;
-
 
     if (!nh_.getParam("/gridmap/frequency", frequency)){return errorFunc("/gridmap/frequency");};
     if (!nh_.getParam("/gridmap/size_x", map_size_x)){return errorFunc("/gridmap/size_x");};
@@ -73,7 +66,6 @@ bool OccupancygridCreator::loadConfig()
     if (!nh_.param("/obstacles/create_static/squares/orientation_deg", static_squares_orientation_, {})){defaultFunc("/obstacle_create_static/square/rotation");};
     if (!nh_.param("/obstacles/create_static/squares/line_thickness", static_squares_line_thickness_, {})){defaultFunc("/obstacle_create_static/square/line_thickness");};
 
-
     if (!nh_.param("/obstacles/receiving_position/use", receiving_obstacle_position_use_, false)){defaultFunc("/receiving_position/use");};
 
     if (!nh_.param("/obstacles/receiving_position/circles/topics", receiving_obstacle_position_circles_topics, {})){defaultFunc("/receiving_position/circles/topic");};
@@ -83,8 +75,6 @@ bool OccupancygridCreator::loadConfig()
     if (!nh_.param("/obstacles/receiving_position/rectangles/lengths", receiving_obstacle_squares_length_, {})){defaultFunc("/receiving_position/squares/length");};
     if (!nh_.param("/obstacles/receiving_position/rectangles/widths", receiving_obstacle_squares_width_, {})){defaultFunc("/receiving_position/squares/width");};
     if (!nh_.param("/obstacles/receiving_position/rectangles/line_thickness", receiving_obstacle_squares_line_thickness_, {})){defaultFunc("/receiving_position/squares/line_thickness");};
-
-    
 
     if (!nh_.param("/obstacles/receiving_position/lines/topics", receiving_obstacle_position_lines_topics, {})){defaultFunc("/receiving_position/lines/topic");};
     if (!nh_.param("/obstacles/receiving_position/lines/lengths", receiving_obstacle_lines_length_, {})){defaultFunc("/receiving_position/lines/length");};
@@ -109,10 +99,11 @@ bool OccupancygridCreator::loadConfig()
     gridmap_.header.stamp = ros::Time::now();
     gridmap_.header.frame_id = map_id;
     
-    //all cells are initially unknown
+    // All cells are initially unknown
     gridmap_.header.stamp = ros::Time::now();
     gridmap_.header.frame_id = map_id;
-    //gridmap_.info.map_load_time = ros::Time(0);
+
+    // Gridmap_.info.map_load_time = ros::Time(0);
     gridmap_.info.resolution = map_resolution;
     gridmap_.info.width = map_size_x/map_resolution;
     gridmap_.info.height = map_size_y/map_resolution;
@@ -121,7 +112,7 @@ bool OccupancygridCreator::loadConfig()
     gridmap_.info.origin.position.x = map_center_x - map_size_x / 2;
     gridmap_.info.origin.position.y = map_center_y - map_size_y / 2;
 
-    //here we create the image
+    // Here we create the image
     occupancy_image_ = cv::Mat(gridmap_.info.width, gridmap_.info.height, CV_8UC1, gridmap_.data.data());
 
     /**
@@ -138,7 +129,6 @@ bool OccupancygridCreator::loadConfig()
 
         createStaticObstacles(static_circles_x_, static_circles_y_, static_circles_radius_);
 
-
         if (!(static_squares_x_.size() == static_squares_y_.size()) || !(static_squares_x_.size() == static_squares_length_.size()) ||
             !(static_squares_x_.size() == static_squares_length_.size()) || !(static_squares_x_.size() == static_squares_width_.size()) ||
             !(static_squares_x_.size() == static_squares_orientation_.size()))
@@ -150,45 +140,28 @@ bool OccupancygridCreator::loadConfig()
         for (long unsigned int i=0; i<static_squares_x_.size(); i++)
         {
             placeSquareInImage(gridmap_, occupancy_image_, static_squares_x_[i], static_squares_y_[i], static_squares_length_[i], static_squares_width_[i], static_squares_orientation_[i], static_squares_line_thickness_[i]);
-
-            // if (inflate_)
-            // {
-            //     placeInflatedSquareInImage(gridmap_, occupancy_image_, static_squares_x_[i], static_squares_y_[i], static_squares_length_[i], static_squares_width_[i], static_squares_orientation_[i], inflation_thickness_);
-            // }
         }
-
     }
 
     // Visualization
     std::string visualization_topic = "/grid/obs/vis";
     static_obstacles_marker_pub_.reset(new ROSMarkerPublisher(nh_, visualization_topic.c_str(), target_frame_, static_circles_x_.size()+static_squares_x_.size()));
 
-
-
     // Place data back in the gridmap
     gridmap_.data = std::vector<int8_t>(occupancy_image_.data, occupancy_image_.data + occupancy_image_.total());
-
 
     /**
      * SETUP: Receiving obstacles
     */
-    // if (!(receiving_obstacle_position_topics.size() == receiving_obstacle_radius_.size()))
-    // {
-    //     ROS_ERROR_STREAM("[Occupancygrid Creator]: Parameters receiving_position/topic and receiving_position/radius dont have the same length!");
-    //     return false;
-    // }
-
     state_msgs_stored_.resize(receiving_obstacle_position_squares_topics.size());
     state_received_.resize(receiving_obstacle_position_squares_topics.size());
     state_msgs_lines_stored_.resize(receiving_obstacle_position_lines_topics.size());
     state_received_lines_.resize(receiving_obstacle_position_lines_topics.size());
 
-    
     /**
      * SETUP: ROS
     */
     pub_map_ = nh_.advertise<nav_msgs::OccupancyGrid>(publish_topic, 1);
-
 
     subs_vector_.resize(receiving_obstacle_position_squares_topics.size());
     subs_vector_lines_.resize(receiving_obstacle_position_lines_topics.size());
@@ -231,10 +204,6 @@ bool OccupancygridCreator::loadConfig()
     }
 
     timer_ = nh_.createTimer(ros::Duration(1.0 / frequency), &OccupancygridCreator::createMap, this);
-
-    // Show in a window
-    //cv::imshow("rectangles", test_image);
-    //cv::waitKey(0);
     
     return true;
 }
@@ -299,12 +268,12 @@ void OccupancygridCreator::createMap(const ros::TimerEvent& event)
         new_gridmap.data = std::vector<int8_t>(occupancy_image.data, occupancy_image.data + occupancy_image.total());
         pub_map_.publish(new_gridmap);
 
-
-
         return;
-    } else if (receiving_obstacle_position_gazebo_use_ && state_gazebo_received_)
+    }
+    else if (receiving_obstacle_position_gazebo_use_ && state_gazebo_received_)
     {
         ROS_WARN_STREAM("[Occupancygrid Creator]: Creating received Gazebo Obstacles. ");
+
         // For each of the messages, place in the object
         nav_msgs::OccupancyGrid new_gridmap = gridmap_;
         std::vector<double> x;
@@ -332,7 +301,7 @@ void OccupancygridCreator::createMap(const ros::TimerEvent& event)
 
 void OccupancygridCreator::createStaticObstacles(std::vector<double> x, std::vector<double> y, std::vector<double> radius)
 {
-    // first change to integer parameters of grid structure
+    // First change to integer parameters of grid structure
     for (long unsigned int i=0; i<x.size(); i++)
     {   
         placeObstacleInGrid(gridmap_, x[i], y[i], radius[i]);
@@ -366,7 +335,7 @@ void OccupancygridCreator::placeSquareInImage(nav_msgs::OccupancyGrid &gridmap, 
 
     int inflation_thickness_on_grid = inflation_thickness_/gridmap.info.resolution;
 
-    // first is middle point, then length and width in meters, then orientation in degrees
+    // First is middle point, then length and width in meters, then orientation in degrees
     cv::RotatedRect rRect = cv::RotatedRect(cv::Point2f(x_on_grid, y_on_grid), cv::Size2f(length_on_grid,width_on_grid), orientation);
     cv::Point2f vertices[4];
     rRect.points(vertices);
@@ -411,12 +380,6 @@ void OccupancygridCreator::placeSquareInImage(nav_msgs::OccupancyGrid &gridmap, 
             cv::line(occupancy_image, vertices[0], vertices[1], cv::Scalar(100), 1);
             cv::line(occupancy_image, vertices[2], vertices[3], cv::Scalar(100), 1);
         }
-
-
-
-        
-    
-        
     }
 }
 
@@ -429,7 +392,7 @@ void OccupancygridCreator::placeInflatedSquareInImage(nav_msgs::OccupancyGrid &g
 
     cv::Point center(x_cur, y_cur);
 
-    // first is middle point, then length and width in meters, then orientation in degrees
+    // First is middle point, then length and width in meters, then orientation in degrees
     drawRoundedRect(occupancy_image, center, width_on_grid+inflation_thickness_on_grid, length_on_grid+inflation_thickness_on_grid, inflation_thickness_on_grid, orientation, cv::Scalar(100), 1);
 }
 

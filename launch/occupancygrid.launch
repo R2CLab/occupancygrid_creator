@@ -2,7 +2,7 @@
 
 <launch>
   <!-- Map settings -->
-  <arg name="map_file" default="$(find occupancygrid_creator)/config/map_hovergames.yaml"/>
+  <arg name="map_file" default="$(find occupancygrid_creator)/config/map_hovergames_hmpc.yaml"/>
 
   <!-- ROS parameter settings -->
   <rosparam command="load" file="$(arg map_file)"/>

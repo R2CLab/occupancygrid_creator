@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(occupancygrid_creator)
 
-
 ## Compile as C++11, supported in ROS Kinetic and newer
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-deprecated-declarations")
 
@@ -49,7 +48,6 @@ set(LIBRARY_SOURCES ${LIBRARY_SOURCES}
   src/ros_visuals.cpp
 )
 
-
 # Add the sources and headers to the library
 add_library(${PROJECT_NAME} ${LIBRARY_SOURCES} ${LIBRARY_HEADERS} )
 # Link the library to other libraries needed
@@ -70,9 +68,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 
-
 # Executable node
 add_executable(occupancygrid_creator_node src/occupancygrid_creator_node.cpp)
 add_dependencies(occupancygrid_creator_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(occupancygrid_creator_node ${catkin_LIBRARIES} ${PROJECT_NAME})
-
