@@ -685,7 +685,6 @@ ROSModelMarker::ROSModelMarker(ROSMarkerPublisher *ros_publisher, const std::str
 {
     marker_.type = visualization_msgs::Marker::MESH_RESOURCE;
     marker_.mesh_resource = model_path;
-    // "package://lmpcc/models/walking.dae";
 
     // LINE_STRIP/LINE_LIST markers use only the x component of scale, for the line width
     marker_.scale.x = 1.;

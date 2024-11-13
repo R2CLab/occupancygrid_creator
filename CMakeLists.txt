@@ -55,9 +55,6 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
 # Specify include directories to use when compiling given target
 target_include_directories(${PROJECT_NAME} PUBLIC)
 
-# Sometimes need to tell cmake the language we are using
-#set_target_properties(lmpcc_solver_lib PROPERTIES LINKER_LANGUAGE CXX)
-
 # Installation rules for the created library
 install(TARGETS ${PROJECT_NAME}
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

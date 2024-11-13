@@ -7,6 +7,6 @@
   <!-- ROS parameter settings -->
   <rosparam command="load" file="$(arg map_file)"/>
 
-  <!-- Start LMPCC node -->
+  <!-- Start occupancygrid_creator node -->
   <node pkg="occupancygrid_creator" type="occupancygrid_creator_node" name="occupancygrid_creator_node" cwd="node" respawn="false" output="screen"/>
 </launch>
