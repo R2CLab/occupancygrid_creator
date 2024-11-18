@@ -34,10 +34,10 @@ obstacles:
       topics: []
       radius: []
     rectangles:
-      topics: [/obstacles/rectangle2x1_0, /obstacles/rectangle2x1_1, /obstacles/rectangle1x1_0, /obstacles/rectangle1x1_1]
-      lengths: [0.6, 0.6, 0.6, 0.6]
-      widths: [1.2, 1.2, 0.6, 0.6]
-      line_thickness: [0.01, 0.01, 0.01, 0.01]
+      topics: [/obstacles/rectangle2x1_0, /obstacles/rectangle2x1_1, /obstacles/rectangle1x1_0, /obstacles/rectangle1x1_1, /obstacles/rectangle1x1_2]
+      lengths: [0.6, 0.6, 0.6, 0.6, 0.6]
+      widths: [1.2, 1.2, 0.6, 0.6, 0.6]
+      line_thickness: [0.01, 0.01, 0.01, 0.01, 0.01]
     lines:
       topics: []
       lengths: []
@@ -53,6 +53,6 @@ recording:
 
 visualization:
   static_circle_indices_to_visualize: []
-  static_square_indices_to_visualize: [1, 2, 3, 4]
+  static_square_indices_to_visualize: []
   marker_color: [0.7, 0.7, 0.7, 1]
   marker_z: 1.8
