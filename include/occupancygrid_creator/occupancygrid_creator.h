@@ -26,6 +26,9 @@ public:
     std::vector<geometry_msgs::TransformStamped> state_msgs_stored_;
     std::vector<geometry_msgs::TransformStamped> state_msgs_lines_stored_;
 
+    // Map ID
+    std::string map_id_;
+
     // Image
     cv::Mat occupancy_image_;
 
@@ -74,7 +77,6 @@ public:
 
     // Recording
     std::string recording_topic_base_ = "/grid/obs/rec/";
-    std::string target_frame_ = "map";
     std::vector<ros::Publisher> obs_rec_circle_pubs_, obs_rec_square_pubs_;
     std::vector<double> static_circle_indices_to_record_, static_square_indices_to_record_;
     std::vector<std::string> static_circle_names_, static_square_names_;
