@@ -475,7 +475,7 @@ void OccupancygridCreator::placeSquareInImage(nav_msgs::OccupancyGrid &gridmap, 
     rRect.points(vertices);
     for (int i = 0; i < 4; i++)
     {
-        cv::line(occupancy_image, vertices[i], vertices[(i + 1) % 4], cv::Scalar(100), line_thickness_on_grid);
+        cv::line(occupancy_image, vertices[i], vertices[(i + 1) % 4], cv::Scalar(100), 1);
     }
 
     if (inflate_)
