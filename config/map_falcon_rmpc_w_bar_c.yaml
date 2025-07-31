@@ -1,41 +1,42 @@
 gridmap:
   frequency: 1        # which frequency do we want to send an updated map?
   map_id: "world"      # map name
-  size_x: 12           # size of x in meters
-  size_y: 12           # size of y in meters
-  resolution: 0.01    # size of each grid
+  size_x: 6           # size of x in meters
+  size_y: 6           # size of y in meters
+  resolution: 1    # size of each grid
   map_origin_x: 0     # center x position of the map
   map_origin_y: 0     # center y position of the map
   publish_topic: "/occupancy_grid" # The topic name of the map publisher 
+  n_runs: 5
 
 obstacles:
   inflate: True
-  inflation_thickness: 0.2 # radius around obstacles to inflate
+  inflation_thickness: 0.06925 # radius around obstacles to inflate
   create_static:
-    use: true
+    use: false
     circles:
       x_center: []
       y_center: []
       radius: []
       names: []
     squares:
-      x_center: [0]
-      y_center: [0]
-      length: [8]
-      width: [7]
-      orientation_deg: [0] # 0 orientation means length is in x-direction
-      line_thickness: [0.01]
-      names: ["bounds"]
+      x_center: []
+      y_center: []
+      length: []
+      width: []
+      orientation_deg: [] # 0 orientation means length is in x-direction
+      line_thickness: []
+      names: []
   receiving_position:
     use: false
     circles:
       topics: []
       radius: []
     rectangles:
-      topics: [/obstacles/rectangle2x1_0, /obstacles/rectangle2x1_1]
-      lengths: [1.2, 1.2]
-      widths: [0.6, 0.6]
-      line_thickness: [0.01, 0.01, 0.01]
+      topics: []
+      lengths: []
+      widths: []
+      line_thickness: []
     lines:
       topics: []
       lengths: []
@@ -47,10 +48,10 @@ obstacles:
 
 recording:
   static_circle_indices_to_record: []
-  static_square_indices_to_record: [1, 2]
+  static_square_indices_to_record: []
 
 visualization:
   static_circle_indices_to_visualize: []
-  static_square_indices_to_visualize: [1, 2]
+  static_square_indices_to_visualize: []
   marker_color: [0.7, 0.7, 0.7, 1]
   marker_z: 1.8
