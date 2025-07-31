@@ -76,6 +76,10 @@ bool OccupancygridCreator::loadConfig()
     {
         return errorFunc("/gridmap/publish_topic");
     };
+    if (!nh_.getParam("/gridmap/n_runs", n_runs_))
+    {
+        defaultFunc("/gridmap/n_runs");
+    };
 
     if (!nh_.param("/obstacles/inflate", inflate_, false))
     {
@@ -328,7 +332,13 @@ bool OccupancygridCreator::loadConfig()
         }
     }
 
-    timer_ = nh_.createTimer(ros::Duration(1.0 / frequency), &OccupancygridCreator::createMap, this);
+    if (n_runs_ != 0)
+    {
+        timer_ = nh_.createTimer(ros::Duration(1.0 / frequency), &OccupancygridCreator::createMap, this);
+    } else
+    {
+        ROS_WARN_STREAM("[Occupancygrid Creator]: No runs specified, not starting timer.");
+    }
 
     return true;
 }
@@ -346,6 +356,13 @@ void OccupancygridCreator::defaultFunc(const std::string name)
 
 void OccupancygridCreator::createMap(const ros::TimerEvent &event)
 {
+    run_idx_++;
+    if (run_idx_ >= n_runs_ && n_runs_ != -1)
+    {
+        ROS_INFO_STREAM("[Occupancygrid Creator]: Finished all runs, stopping timer.");
+        timer_.stop();
+    }
+
     if (receiving_obstacle_position_use_ && !(std::find(begin(state_received_), end(state_received_), true) == end(state_received_)))
     {
         ROS_WARN_STREAM("[Occupancygrid Creator]: Creating received Obstacles. ");

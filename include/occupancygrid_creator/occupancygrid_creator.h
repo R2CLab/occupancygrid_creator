@@ -20,6 +20,7 @@ class OccupancygridCreator
 public:
     ros::NodeHandle nh_;
     ros::Timer timer_;
+    int n_runs_ = -1, run_idx_ = 0;
 
     // ros messages
     nav_msgs::OccupancyGrid gridmap_;
